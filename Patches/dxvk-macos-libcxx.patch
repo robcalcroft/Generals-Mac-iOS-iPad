@@ -1,0 +1,11 @@
+--- a/src/dxvk/dxvk_pipemanager.cpp
++++ b/src/dxvk/dxvk_pipemanager.cpp
+@@ -443,7 +443,7 @@
+ 
+     auto iter = m_shaderLibraries.emplace(
+       std::piecewise_construct,
+-      std::tuple(),
++      std::forward_as_tuple(key),
+       std::tuple(m_device, this, key, layout));
+     return &iter.first->second;
+   }

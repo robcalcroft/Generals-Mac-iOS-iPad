@@ -1,0 +1,30 @@
+# Top-level names (shell globs) of the retail Zero Hour folder that must NOT be
+# copied into an app bundle: Windows-only binaries/installers, Steam metadata,
+# and runtime products left behind by earlier deploy/run.sh setups.
+# Keep ZH_Generals/ (base-game data Zero Hour needs) and all *.big archives.
+.*
+*.dylib
+run.sh
+GeneralsXZH
+GeneralsXZH.dxvk-cache
+*_d3d9.log
+MoltenVK_icd.json
+dxvk.conf
+fontconfig
+*.DLL
+*.dll
+*.dat
+*.ico
+*.bmp
+*.doc
+*.lcf
+Launcher.txt
+MSS
+Manuals
+steamapps
+steam_appid.txt
+00000000.*
+RedistInstallers
+_CommonRedist
+*.txt
+installScript.vdf

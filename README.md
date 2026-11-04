@@ -61,32 +61,21 @@ alone: one of us can't write C++, and the other can't hear the chirping.
 
 ## Quick start — macOS
 
-Prerequisites (one time):
-
-```sh
-# Toolchain
-xcode-select --install
-brew install cmake ninja meson pkgconf
-brew install --cask steamcmd
-
-# vcpkg (full clone — a shallow clone breaks manifest baselines)
-git clone https://github.com/microsoft/vcpkg ~/vcpkg && ~/vcpkg/bootstrap-vcpkg.sh
-export VCPKG_ROOT=~/vcpkg          # add to your shell profile
-
-# LunarG Vulkan SDK (NOT the Homebrew cask) — https://vulkan.lunarg.com/sdk/home
-export VULKAN_SDK=$HOME/VulkanSDK/<version>/macOS   # add to your shell profile
-```
-
-Clone, build, get assets, play:
+The only prerequisite is Xcode Command Line Tools (`xcode-select --install`). Everything
+else (cmake, ninja, meson, vcpkg, the Vulkan loader, MoltenVK) is fetched into a
+git-ignored `.toolchain/` folder inside the repo.
 
 ```sh
 git clone https://github.com/ammaarreshi/Generals-Mac-iOS-iPad.git GeneralsX
 cd GeneralsX
-./scripts/build/macos/build-macos-zh.sh     # checks deps, configures, builds
-./scripts/build/macos/deploy-macos-zh.sh    # creates ~/GeneralsX/GeneralsZH + run.sh
-./scripts/get-assets.sh <your_steam_username>   # fetches game data you own
-cd ~/GeneralsX/GeneralsZH && ./run.sh -win
+./scripts/get-assets.sh <your_steam_username>   # optional (needs: brew install --cask steamcmd)
+./scripts/build/macos/make-app-zh.sh --game-data <your Zero Hour folder>
+open "dist/Generals Zero Hour.app"
 ```
+
+You get one double-clickable `Generals Zero Hour.app` with the game data inside. Details:
+[docs/HOWTO/MACOS_APP.md](docs/HOWTO/MACOS_APP.md). The older developer flow
+(`build-macos-zh.sh`, `deploy-macos-zh.sh`, `run.sh`) still works if you prefer it.
 
 ## Quick start — iPhone / iPad
 

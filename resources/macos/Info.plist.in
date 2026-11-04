@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleExecutable</key><string>GeneralsXZH</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
+    <key>CFBundleIdentifier</key><string>com.generalsx.generalsxzh</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleName</key><string>@APP_NAME@</string>
+    <key>CFBundleDisplayName</key><string>@APP_NAME@</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>1.0</string>
+    <key>CFBundleVersion</key><string>@COMMIT@</string>
+    <key>GXCommit</key><string>@COMMIT@</string>
+    <key>LSApplicationCategoryType</key><string>public.app-category.strategy-games</string>
+    <key>LSMinimumSystemVersion</key><string>@MINOS@</string>
+    <key>LSArchitecturePriority</key><array><string>arm64</string></array>
+    <key>NSHighResolutionCapable</key><true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key><true/>
+</dict>
+</plist>

@@ -1,0 +1,5 @@
+# Build tools installed into .toolchain/venv by bootstrap-toolchain.sh
+# (replaces `brew install cmake ninja meson`).
+cmake==3.31.6
+ninja==1.11.1.4
+meson==1.7.2

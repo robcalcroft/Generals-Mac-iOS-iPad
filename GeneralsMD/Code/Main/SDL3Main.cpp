@@ -33,6 +33,11 @@
 #include <SDL3/SDL_vulkan.h>
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
+#include <mach-o/dyld.h>   // _NSGetExecutablePath (app-bundle detection)
+#include <climits>
+#include <cerrno>
+#include <filesystem>
+#include <string>
 #endif
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
 // On iOS, SDL renames main() to SDL_main and provides its own UIApplicationMain
@@ -235,6 +240,108 @@ GameEngine *CreateGameEngine(void)
 	return engine;
 }
 
+#if defined(__APPLE__) && !(defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
+/**
+ * ConfigureMacAppBundleRuntime
+ *
+ * GeneralsX @feature Claude 04/11/2026 Self-contained macOS .app support.
+ * When the executable lives in <App>.app/Contents/MacOS, point every runtime
+ * dependency at the bundle itself so no launcher script or DYLD_* variable is
+ * needed: game data (Resources/GameData), the MoltenVK ICD, DXVK/fontconfig
+ * config, and per-user cache/log/save locations outside the signed bundle.
+ * Every variable is set with overwrite=0, so a developer's own environment
+ * still wins. Outside a bundle (deploy/run.sh dev loop) this is a no-op.
+ */
+static void ConfigureMacAppBundleRuntime()
+{
+	char rawExe[PATH_MAX] = {0};
+	uint32_t rawSize = sizeof(rawExe);
+	if (_NSGetExecutablePath(rawExe, &rawSize) != 0) {
+		return;
+	}
+	char exePath[PATH_MAX] = {0};
+	if (realpath(rawExe, exePath) == nullptr) {
+		return;
+	}
+
+	const std::string exe(exePath);
+	const std::string marker = ".app/Contents/MacOS/";
+	const size_t markerPos = exe.rfind(marker);
+	if (markerPos == std::string::npos) {
+		return;  // not running from inside an .app bundle
+	}
+	const std::string resources = exe.substr(0, markerPos) + ".app/Contents/Resources";
+	const std::string gameData = resources + "/GameData";
+	const char *home = getenv("HOME");
+
+	// Per-user, non-bundle locations (the signed bundle is never written to).
+	if (home != nullptr) {
+		const std::string cacheDir = std::string(home) + "/Library/Caches/GeneralsX";
+		const std::string logDir = std::string(home) + "/Library/Logs/GeneralsX";
+		std::error_code ec;
+		std::filesystem::create_directories(cacheDir, ec);
+		std::filesystem::create_directories(logDir, ec);
+		setenv("DXVK_STATE_CACHE_PATH", cacheDir.c_str(), 0);
+		setenv("DXVK_LOG_PATH", logDir.c_str(), 0);
+
+		// Launched from Finder: stderr goes nowhere, so keep a log (previous run
+		// preserved as .prev.log, matching the iOS diagnostic convention).
+		if (!isatty(STDERR_FILENO)) {
+			const std::string logPath = logDir + "/GeneralsXZH.log";
+			const std::string prevPath = logDir + "/GeneralsXZH.prev.log";
+			rename(logPath.c_str(), prevPath.c_str());
+			freopen(logPath.c_str(), "w", stderr);
+			setvbuf(stderr, nullptr, _IOLBF, 0);
+		}
+	}
+
+	setenv("DXVK_LOG_LEVEL", "none", 0);
+	setenv("DXVK_HUD", "0", 0);
+
+	// MoltenVK ICD, DXVK and fontconfig configuration shipped in Resources.
+	const std::string icd = resources + "/MoltenVK_icd.json";
+	if (access(icd.c_str(), R_OK) == 0) {
+		setenv("VK_ICD_FILENAMES", icd.c_str(), 0);
+		setenv("VK_DRIVER_FILES", icd.c_str(), 0);
+	}
+	const std::string dxvkConf = resources + "/dxvk.conf";
+	if (access(dxvkConf.c_str(), R_OK) == 0) {
+		setenv("DXVK_CONFIG_FILE", dxvkConf.c_str(), 0);
+	}
+	const std::string fontsConf = resources + "/fontconfig/fonts.conf";
+	if (access(fontsConf.c_str(), R_OK) == 0) {
+		setenv("FONTCONFIG_FILE", fontsConf.c_str(), 0);
+		setenv("FONTCONFIG_PATH", (resources + "/fontconfig").c_str(), 0);
+	}
+
+	// Game data baked into the bundle: resolve it explicitly and run from it,
+	// because loose files (Data/INI, Window/...) are looked up relative to cwd.
+	if (access(gameData.c_str(), R_OK) == 0) {
+		setenv("CNC_GENERALS_ZH_PATH", gameData.c_str(), 0);
+		if (chdir(gameData.c_str()) != 0) {
+			fprintf(stderr, "WARNING: chdir(%s) failed: %s\n", gameData.c_str(), strerror(errno));
+		}
+
+		// Seed default settings on first run (the 2003 GPU auto-detect would
+		// otherwise drop unknown GPUs to Low detail).
+		if (home != nullptr) {
+			const std::string userDataDir = std::string(home) + "/Library/Application Support/GeneralsX/GeneralsZH";
+			const std::string optionsPath = userDataDir + "/Options.ini";
+			const std::string defaults = resources + "/DefaultOptions.ini";
+			if (access(optionsPath.c_str(), F_OK) != 0 && access(defaults.c_str(), R_OK) == 0) {
+				std::error_code ec;
+				std::filesystem::create_directories(userDataDir, ec);
+				std::filesystem::copy_file(defaults, optionsPath, ec);
+				if (!ec) {
+					fprintf(stderr, "INFO: Seeded default Options.ini\n");
+				}
+			}
+		}
+		fprintf(stderr, "INFO: macOS app bundle data: %s\n", gameData.c_str());
+	}
+}
+#endif
+
 /**
  * main
  *
@@ -253,6 +360,10 @@ int main(int argc, char* argv[])
 	// Store command line arguments in globals for CommandLine.cpp parser
 	__argc = argc;
 	__argv = argv;
+
+#if defined(__APPLE__) && !(defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
+	ConfigureMacAppBundleRuntime();
+#endif
 
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
 	// Diagnostic capture: an icon-launched app's stderr goes nowhere we can read,

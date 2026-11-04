@@ -236,7 +236,7 @@
                 "RTS_BUILD_OPTION_SAGE_PATCH": "ON"
             },
             "environment": {
-                "PKG_CONFIG_PATH": "/opt/homebrew/lib/pkgconfig"
+                "PKG_CONFIG_PATH": ""
             },
             "description": "Phase 5 macOS port: arm64 native (Apple Silicon) with MoltenVK for graphics, SDL3 for windowing, OpenAL for audio. Universal binary deferred until all dylib deps have fat versions."
         },

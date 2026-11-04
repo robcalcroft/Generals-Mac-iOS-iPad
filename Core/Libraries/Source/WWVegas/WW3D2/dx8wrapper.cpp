@@ -582,7 +582,12 @@ bool DX8Wrapper::Init(void * hwnd, bool lite)
 		#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
 		D3D8Lib = LoadLibrary("@executable_path/Frameworks/libdxvk_d3d8.0.dylib");
 		#else
-		D3D8Lib = LoadLibrary("libdxvk_d3d8.dylib");
+		// GeneralsX @feature Claude 04/11/2026 Prefer the copy embedded in an .app bundle
+		// (Contents/Frameworks); fall back to the bare name for the deploy/run.sh dev loop.
+		D3D8Lib = LoadLibrary("@executable_path/../Frameworks/libdxvk_d3d8.0.dylib");
+		if (D3D8Lib == nullptr) {
+			D3D8Lib = LoadLibrary("libdxvk_d3d8.dylib");
+		}
 		#endif
 		fprintf(stderr, "DEBUG: DX8Wrapper::Init() - LoadLibrary result: %p\n", (void*)D3D8Lib);
 		if (D3D8Lib == nullptr) {
